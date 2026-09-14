@@ -1,5 +1,6 @@
 #include "thread_pool.h"
 #include <iostream>
+#include <utility>
 
 ThreadPool::ThreadPool(int worker_count)
 {
@@ -16,42 +17,30 @@ ThreadPool::~ThreadPool()
         stop = true;
     }
     cv.notify_all();
-    for (auto& worker : workers)
+    for (auto &worker : workers)
     {
         worker.join();
     }
 }
-void ThreadPool::submit(std::function<void()> task)
+void ThreadPool::work()
 {
 
+    while (true)
     {
-        std::lock_guard<std::mutex> lock(mutex);
-        if (stop)
+        std::function<void()> temp;
         {
-            return;
+            std::unique_lock<std::mutex> lock(mutex);
+            cv.wait(lock, [&]()
+                    { return !tasks.empty() || stop; });
+            if (stop && tasks.empty())
+            {
+                return;
+            }
+            temp = std::move(tasks.front());
+            tasks.pop();
         }
-        tasks.push(std::move(task));
+        temp();
     }
-    cv.notify_one();
 }
 
-void ThreadPool::work()
-    {
 
-        while (true)
-        {
-            std::function<void()> temp;
-            {
-                std::unique_lock<std::mutex> lock(mutex);
-                cv.wait(lock, [&]()
-                        { return !tasks.empty() || stop; });
-                if (stop && tasks.empty())
-                {
-                    return;
-                }
-                temp = std::move(tasks.front());
-                tasks.pop();
-            }
-            temp();
-        }
-    }

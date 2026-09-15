@@ -3,35 +3,47 @@
 #include <atomic>
 #include <cassert>
 
-int add(int a,int b){
-    return a+b;
+int add(int a, int b)
+{
+    return a + b;
 }
-double adddouble(double a,double b){
-    return a*b;
+double adddouble(double a, double b)
+{
+    return a * b;
 }
-std::string str(std::string temp){
+std::string str(std::string temp)
+{
     return temp;
 }
-int adderror(int a){
+int adderror(int a)
+{
     throw std::runtime_error("error");
 }
 int main()
 {
-    ThreadPool pool(1);
-
-    auto f4=pool.submit(adderror, 5);
-    try{
-        std::cout << f4.get() << '\n';
+    std::atomic<int> counter{0};
+    {
+        ThreadPool pool(2, 2);
+        std::thread p1([&pool, &counter]()
+                      {
+            for(int i=0;i<5;i++){
+                pool.submit([&counter](){
+                    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                    counter.fetch_add(1);
+                });
+            } });
+        std::thread p2([&]()
+                      {
+            for(int i=0;i<5;i++){
+                pool.submit([&](){
+                    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                    counter.fetch_add(1);
+                });
+            } });
+        p1.join();
+        p2.join();
     }
-    catch(const std::exception &e){
-        std::cout << e.what() << '\n';
-    }
-    auto f1=pool.submit(add, 10, 20);
-    std::cout << f1.get() << '\n';
-    auto f2=pool.submit(adddouble, 5.684, 4.269);
-    std::cout << f2.get() << '\n';
-    auto f3=pool.submit(str, "hello,ustc");
-    std::cout << f3.get() << '\n';
-    
+    assert(counter == 10);
+    std::cout << "success" << std::endl;
     return 0;
 }

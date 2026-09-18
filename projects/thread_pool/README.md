@@ -26,3 +26,5 @@
 - 细粒度任务会因调度与同步开销而性能受损。
 - 增加工作线程数并不总能提升吞吐量。
 - 任务粒度是 ThreadPool 设计中需要重点考虑的因素。
+### MoveOnlyFunction
+使用自定义 move-only type-erased callable，允许 packaged_task 直接进入任务队列，移除了 shared_ptr + lambda + std::function 适配层。A/B benchmark 显示该改造没有消除细粒度任务下 8-worker 的性能退化，因此下一步将关注全局任务队列与同步架构。

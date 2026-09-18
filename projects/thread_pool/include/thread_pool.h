@@ -8,6 +8,8 @@
 #include <vector>
 #include <future>
 #include <memory>
+#include "move_only_function.h"
+
 
 class ThreadPool
 {
@@ -19,13 +21,10 @@ public:
     auto submit(F &&f, Args &&...args) -> std::future<decltype(std::forward<F>(f)(std::forward<Args>(args)...))>
     {
         using ReturnType = decltype(std::forward<F>(f)(std::forward<Args>(args)...));
-        auto bound_task = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
-        auto task_ptr = std::make_shared<std::packaged_task<ReturnType()>>(std::move(bound_task));
-        std::future<ReturnType> result = task_ptr->get_future();
-        std::function<void()> wrapper = [task_ptr]()
-        {
-            (*task_ptr)();
-        };
+        auto bound_task=std::bind(std::forward<F>(f),std::forward<Args>(args)...);
+        auto wrapper=std::packaged_task<ReturnType()>(std::move(bound_task));
+        std::future<ReturnType>result=wrapper.get_future();
+        MoveOnlyFunction task(std::move(wrapper));
         {
             std::unique_lock<std::mutex> lock(mutex);
             not_full.wait(lock, [this]()
@@ -34,7 +33,7 @@ public:
             {
                 throw std::runtime_error("submit on stopped ThreadPool");
             }
-            tasks.push(std::move(wrapper));
+            tasks.push(std::move(task));
         }
         not_empty.notify_one();
         return result;
@@ -42,7 +41,7 @@ public:
 
 private:
     std::vector<std::thread> workers;
-    std::queue<std::function<void()>> tasks;
+    std::queue<MoveOnlyFunction> tasks;
     std::mutex mutex;
     std::condition_variable not_empty;
     std::condition_variable not_full;

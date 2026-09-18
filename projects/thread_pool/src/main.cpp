@@ -74,14 +74,24 @@ BenchmarkResult run_benchmark(
 }
 int main()
 {
-    run_benchmark(4, 100, 1000000);
-    run_benchmark(8, 100, 1000000);
-
-    run_benchmark(4, 1000, 100000);
-    run_benchmark(8, 1000, 100000);
-
-    run_benchmark(4, 10000, 10000);
-    run_benchmark(8, 10000, 10000);
+    std::cout<<"100*1000000"<<std::endl;
+    for (int i = 0; i < 3; i++)
+    {
+        run_benchmark(4, 100, 1000000);
+        run_benchmark(8, 100, 1000000);
+    }
+    std::cout<<"1000*100000"<<std::endl;
+    for (int i = 0; i < 3; i++)
+    {
+        run_benchmark(4, 1000, 100000);
+        run_benchmark(8, 1000, 100000);
+    }
+    std::cout<<"10000*10000"<<std::endl;
+    for (int i = 0; i < 3; i++)
+    {
+        run_benchmark(4, 10000, 10000);
+        run_benchmark(8, 10000, 10000);
+    }
     std::cout << "success" << std::endl;
     return 0;
 }

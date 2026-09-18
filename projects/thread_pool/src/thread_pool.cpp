@@ -31,7 +31,7 @@ void ThreadPool::work()
 
     while (true)
     {
-        std::function<void()> temp;
+        MoveOnlyFunction temp;
         {
             std::unique_lock<std::mutex> lock(mutex);
             not_empty.wait(lock, [&]()

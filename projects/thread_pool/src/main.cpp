@@ -36,7 +36,6 @@ BenchmarkResult run_benchmark(
     std::atomic<int> completed{0};
     std::promise<void> done;
     auto done_future = done.get_future();
-    auto start = std::chrono::steady_clock::now();
     for (int i = 0; i < task_count; i++)
     {
         pool.submit([i, &results, &completed, &done, task_count, loops_per_task]()
@@ -53,6 +52,8 @@ BenchmarkResult run_benchmark(
                                 done.set_value();
                             } });
     }
+    auto start = std::chrono::steady_clock::now();
+    pool.start();
     done_future.wait();
     auto end = std::chrono::steady_clock::now();
     std::uint64_t checksum = 0;
@@ -66,6 +67,10 @@ BenchmarkResult run_benchmark(
     std::cout << "elapsed = " << elapsed << " s\n";
     std::cout << "throughput = " << throughput << " tasks/s\n";
     std::cout << "checksum = " << checksum << '\n';
+    std::cout << pool.get_steal_count() << std::endl;
+    std::cout << pool.get_local_pop_count() << std::endl;
+    std::cout << pool.get_task_fail_count() << std::endl;
+    std::cout << pool.get_steal_attempt_count() << std::endl;
     BenchmarkResult result;
     result.elapsed = elapsed;
     result.throughput = throughput;
@@ -74,18 +79,18 @@ BenchmarkResult run_benchmark(
 }
 int main()
 {
-    std::cout<<"100*1000000"<<std::endl;
-    for (int i = 0; i < 3; i++)
-    {
-        run_benchmark(4, 100, 1000000);
-        run_benchmark(8, 100, 1000000);
-    }
-    std::cout<<"1000*100000"<<std::endl;
-    for (int i = 0; i < 3; i++)
-    {
-        run_benchmark(4, 1000, 100000);
-        run_benchmark(8, 1000, 100000);
-    }
+    // std::cout<<"100*1000000"<<std::endl;
+    // for (int i = 0; i < 3; i++)
+    // {
+    //     run_benchmark(4, 100, 1000000);
+    //     run_benchmark(8, 100, 1000000);
+    // }
+    // std::cout<<"1000*100000"<<std::endl;
+    // for (int i = 0; i < 3; i++)
+    // {
+    //     run_benchmark(4, 1000, 100000);
+    //     run_benchmark(8, 1000, 100000);
+    // }
     std::cout<<"10000*10000"<<std::endl;
     for (int i = 0; i < 3; i++)
     {
@@ -95,3 +100,4 @@ int main()
     std::cout << "success" << std::endl;
     return 0;
 }
+

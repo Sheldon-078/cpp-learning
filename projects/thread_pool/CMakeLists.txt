@@ -9,7 +9,7 @@ project(thread_pool
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(thread_pool_demo src/main.cpp src/thread_pool.cpp)
+add_executable(thread_pool_demo src/main.cpp src/thread_pool.cpp src/worker_queue.cpp)
 
 target_include_directories(thread_pool_demo
   PRIVATE

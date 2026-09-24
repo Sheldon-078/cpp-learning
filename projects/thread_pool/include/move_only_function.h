@@ -20,7 +20,7 @@ struct CallableHolder : CallableBase
     void call() override
     {
         f();
-    };
+    }
 };
 
 class MoveOnlyFunction
@@ -37,16 +37,16 @@ public:
     {
         using T = std::decay_t<F>;
         ptr = std::make_unique<CallableHolder<T>>(std::forward<F>(f));
-    };
+    }
     void operator()()
     {
         if (!ptr)
             throw std::bad_function_call();
         ptr->call();
-    };
+    }
     MoveOnlyFunction() = default;
     MoveOnlyFunction(const MoveOnlyFunction &) = delete;
     MoveOnlyFunction &operator=(const MoveOnlyFunction &) = delete;
-    MoveOnlyFunction(MoveOnlyFunction &&) = default;
-    MoveOnlyFunction &operator=(MoveOnlyFunction &&) = default;
+    MoveOnlyFunction(MoveOnlyFunction &&)noexcept = default;
+    MoveOnlyFunction &operator=(MoveOnlyFunction &&) noexcept= default;
 };

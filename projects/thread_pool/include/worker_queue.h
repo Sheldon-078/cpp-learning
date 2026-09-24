@@ -1,12 +1,8 @@
 #pragma once
 
-#include <memory>
-#include <type_traits>
-#include <utility>
-#include <iostream>
-#include <future>
+
+#include <mutex>
 #include <deque>
-#include <functional>
 #include <optional>
 #include "move_only_function.h"
 

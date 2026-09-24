@@ -34,21 +34,26 @@ public:
                 throw std::runtime_error("submit on stopped ThreadPool");
             }
             queued_tasks++;
-            queues[choose_queue()]->push(std::move(task));
+            try
+            {
+                queues[choose_queue()]->push(std::move(task));
+            }
+            catch (...)
+            {
+                --queued_tasks;
+                lock.unlock();
+                not_full.notify_one();
+                throw;
+            }
         }
         not_empty.notify_one();
         return result;
     }
-    void start();
-    std::size_t get_steal_count() const;         //
-    std::size_t get_local_pop_count() const;     //
-    std::size_t get_task_fail_count() const;     //
-    std::size_t get_steal_attempt_count() const; //
 
 private:
     std::vector<std::thread> workers;
     std::vector<std::unique_ptr<WorkerQueue>> queues;
-    std::atomic<std::size_t> next_queue{0};
+    std::size_t next_queue{0};
     std::size_t queued_tasks{0};
     std::size_t choose_queue();
     std::mutex state_mutex;
@@ -56,12 +61,6 @@ private:
     std::condition_variable not_full;
     std::size_t max_size;
     bool stop = false;
-    bool workers_enabled{false};
-    std::condition_variable start_cv;
     void work(std::size_t worker_id);
     std::optional<MoveOnlyFunction> try_get_task(std::size_t worker_id);
-    std::atomic<std::size_t> steal_count{0}; //
-    std::atomic<std::size_t> local_pop_count{0};
-    std::atomic<std::size_t> task_fail_count{0};
-    std::atomic<std::size_t> steal_attempt_count{0}; //
 };

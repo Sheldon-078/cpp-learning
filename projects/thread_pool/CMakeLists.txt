@@ -1,17 +1,52 @@
-cmake_minimum_required(VERSION 3.20)
+find_package(Threads REQUIRED)
 
-project(thread_pool
-    VERSION 0.1
-    DESCRIPTION "A thread_pool project"
-    LANGUAGES CXX
+add_library(
+    thread_pool_lib
+    src/thread_pool.cpp
+    src/worker_queue.cpp
 )
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+target_include_directories(
+    thread_pool_lib
+    PUBLIC
+    include/
+)
 
-add_executable(thread_pool_demo src/main.cpp src/thread_pool.cpp src/worker_queue.cpp)
+target_link_libraries(
+    thread_pool_lib
+    PUBLIC
+    Threads::Threads
+)
 
-target_include_directories(thread_pool_demo
-  PRIVATE
-    ${PROJECT_SOURCE_DIR}/include
+add_executable(
+    thread_pool_demo
+    src/main.cpp
+)
+
+target_link_libraries(
+    thread_pool_demo
+    PRIVATE
+    thread_pool_lib
+)
+
+add_executable(
+    thread_pool_stress
+    tests/stress_test.cpp
+)
+
+target_link_libraries(
+    thread_pool_stress
+    PRIVATE
+    thread_pool_lib
+)
+
+add_executable(
+    thread_pool_benchmark
+    benchmarks/benchmark.cpp
+)
+
+target_link_libraries(
+    thread_pool_benchmark
+    PRIVATE
+    thread_pool_lib
 )
